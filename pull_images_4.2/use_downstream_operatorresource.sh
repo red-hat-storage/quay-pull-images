@@ -1,6 +1,4 @@
- 
 #!/usr/bin/env bash
-#!/bin/bash
 
 # Source: Openshift-qe
 # https://github.com/openshift-qe/v3-testfiles/blob/master/logging/tools/use_downstream_operatorresource.sh#L68
