@@ -4,7 +4,7 @@
 # Source: openshift-qe
 # https://github.com/openshift-qe/v3-testfiles/blob/master/logging/tools/getOperatorSourceMetadata.sh
 
-set -e
+set -xe
 NAMESPACE=${1:-redhat-operators-art}
 VERSION=${2}
 echo "#############Note! #############"
