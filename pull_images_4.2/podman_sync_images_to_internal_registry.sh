@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-# !/bin/bash
 
 # Source: Openshift-qe
 # https://github.com/openshift-qe/v3-testfiles/blob/d8ddd7e6210b416bb3021c970e11df0f8e488522/logging/tools/podman_sync_images_to_internal_registry.sh
