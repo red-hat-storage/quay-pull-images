@@ -51,12 +51,15 @@ spec:
   defaultRoute: true
 EOF
 oc apply -f /tmp/defaultRoute.yaml
+sleep 15
 echo "#Configure cert and token to registry"
 To_Registry=$(oc get images.config.openshift.io/cluster  -o jsonpath={.status.externalRegistryHostnames[0]})
+echo $To_Registry
 Cert_Dir=$HOME/.cert.d/${To_Registry}
 mkdir -p $Cert_Dir
 oc create serviceaccount registry |true
 oc adm policy add-cluster-role-to-user admin -z registry
+ls $Cert_Dir/tls.crt
 oc get secret router-certs-default -n openshift-ingress -o json |jq -r '.data["tls.crt"]' | base64 -d >$Cert_Dir/tls.crt
 
 echo "#Log in registry"
