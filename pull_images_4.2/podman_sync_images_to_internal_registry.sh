@@ -60,7 +60,7 @@ mkdir -p $Cert_Dir
 oc create serviceaccount registry |true
 oc adm policy add-cluster-role-to-user admin -z registry
 ls $Cert_Dir/tls.crt
-oc get secret router-certs-default -n openshift-ingress -o json |jq -r '.data["tls.crt"]' | base64 -d >$Cert_Dir/tls.crt
+oc get secret router-certs-default -n openshift-ingress -o json |jq -r '.data["tls.crt"]' | base64 -D >$Cert_Dir/tls.crt
 
 echo "#Log in registry"
 echo podman login "${To_Registry}" -u registry -p `oc sa get-token registry`
