@@ -8,7 +8,7 @@
 # Source: openshift-qe
 # http://git.app.eng.bos.redhat.com/git/openshift-misc.git/plain/jenkins/v4-image-test/app_registry_tools/
 
-set -e
+set -xe
 Source_Registry=registry-proxy.engineering.redhat.com
 Dest_Registry=""
 
