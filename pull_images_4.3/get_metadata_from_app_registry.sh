@@ -191,7 +191,7 @@ EOF
 function getQuayToken()
 {
    echo "##get Quay Token"
-   Quay_Token=$(curl -s -H "Content-Type: application/json" -XPOST https://quay.io/cnr/api/v1/users/login -d ' { "user": {  "username": "anli", "password": "5Lg1uyX1UWOwEo217nOtWYj1eigAvfz2I4SZszyugIxcItEtQrGeUFv7TmeCUhbs"} }' |jq -r '.token')
+   Quay_Token=$(curl -s -H "Content-Type: application/json" -XPOST https://quay.io/cnr/api/v1/users/login -d ' { "user": { "username": "anli", "password": "5Lg1uyX1UWOwEo217nOtWYj1eigAvfz2I4SZszyugIxcItEtQrGeUFv7TmeCUhbs"} }' |jq -r '.token')
    echo "$Quay_Token" > "${WORK_DIR}/quay.token"
 }
 
@@ -205,9 +205,6 @@ function downloadRepos()
     mkdir -p "${repo_dir}"
     cd "${repo_dir}"
     URL="https://quay.io/cnr/api/v1/packages/${NAMESPACE}/${repo}"
-    echo $URL
-    echo "1111"
-    echo $Quay_Token
     echo "##Get buddle Version"
     curl -s -H "Content-Type: application/json" -H "Authorization: ${Quay_Token}" -XGET $URL |python -m json.tool > manifest.json
     if [[ $USE_LATEST = true ]] ; then
