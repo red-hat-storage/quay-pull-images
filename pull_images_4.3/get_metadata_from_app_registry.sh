@@ -1,39 +1,41 @@
+#!/usr/bin/env bash
 # !/bin/bash
 
 # Source: openshift-qe
 # http://git.app.eng.bos.redhat.com/git/openshift-misc.git/plain/jenkins/v4-image-test/app_registry_tools/
 
-set -e
+set -xe
 WORK_DIR=$PWD
 REPO_TOP_DIR="$PWD/tempdir"
 MANIFESTS_DIR="$REPO_TOP_DIR/manifests"
 USE_LATEST=true
-NAMESPACE=${1:-redhat-operators-art}
-VERSION=${2:-all}
+VERSION=${1:-all}
+NAMESPACE=${2:-redhat-operators-art}
 echo "#############Usage #############"
-echo "\$1 namspace  \$2: version [all, 4.x , 4.2-s390x ]  \$3 : reponame \$4: reponame ...."
-echo " getOperatorSourceMetadata.sh  redhat-operators-art 4.3  elasticsearch-operator cluster-logging"
+echo "\$1 version  [all, 4.x , 4.2-s390x ]  \$2 namespace [redhat-operators-art redhat-operators-stage] \$3-.... : reponame list "
+echo " getOperatorSourceMetadata.sh  4.3 redhat-operators-art  elasticsearch-operator cluster-logging"
 echo "#############Usage End #############"
 
-if [[ "X$3" == "X" ]];then 
+if [[ "X$3" == "X" ]];then
 
    case $VERSION in
    4.1 )
        REPOSITORYS="elasticsearch-operator cluster-logging openshifttemplateservicebroker openshiftansibleservicebroker"
        ;;
-   4.2 ) 
+   4.2 )
        REPOSITORYS="elasticsearch-operator cluster-logging openshifttemplateservicebroker openshiftansibleservicebroker local-storage-operator metering-ocp nfd"
        ;;
-   4.3 ) 
-       REPOSITORYS="elasticsearch-operator cluster-logging openshifttemplateservicebroker openshiftansibleservicebroker local-storage-operator metering-ocp nfd"
+   4.3 )
+       REPOSITORYS="elasticsearch-operator cluster-logging openshifttemplateservicebroker openshiftansibleservicebroker local-storage-operator metering-ocp nfd sriov-network-operator ptp-operator"
        ;;
-   4.4 ) 
-       REPOSITORYS="elasticsearch-operator cluster-logging local-storage-operator metering-ocp nfd"
+   4.4 )
+       REPOSITORYS="elasticsearch-operator cluster-logging openshifttemplateservicebroker openshiftansibleservicebroker local-storage-operator metering-ocp nfd sriov-network-operator ptp-operator"
+
        ;;
-   *) 
-       REPOSITORYS="elasticsearch-operator cluster-logging"
+   *)
+       REPOSITORYS="elasticsearch-operator cluster-logging openshifttemplateservicebroker openshiftansibleservicebroker local-storage-operator metering-ocp nfd sriov-network-operator ptp-operator"
        ;;
-   esac 
+   esac
 else
     shift;shift
     REPOSITORYS=$*
@@ -57,7 +59,6 @@ import re
 import os
 import yaml
 import argparse
-import commands
 import tempfile
 import logging
 import traceback
@@ -73,7 +74,7 @@ class OlmManifest():
         self.cluster_service_versions=[]
         self.__build_bundle_data()
         self.__set_variables()
-       
+
     def __set_variables(self):
         self.name=self.package['packageName']
         for channel in self.package["channels"]:
@@ -85,12 +86,12 @@ class OlmManifest():
         images=[]
         dest_csv=None
         dest_csv_name=""
-        
+
         for ch in self.package["channels"]:
             if (version==ch["name"]):
                  dest_csv_name=ch["currentCSV"]
         for csv in self.cluster_service_versions:
-	    if (csv["metadata"]["name"] == dest_csv_name):
+            if(csv["metadata"]["name"] == dest_csv_name):
                 for item_deployment in  csv['spec']['install']['spec']['deployments']:
                     for item_container in item_deployment["spec"]["template"]['spec']["containers"]:
                         images.append(item_container['image'])
@@ -102,12 +103,12 @@ class OlmManifest():
                                 if(item_env['name'] == "IMAGE"):
                                     if item_env['value'] not in images:
                                         images.append(item_env['value'])
-	if(len(images)==0):
+        if(len(images)==0):
             images=self.get_images_by_version(version)
         return images
-        
+
     def get_images_by_version(self, version):
-        images=[] 
+        images=[]
         dest_csv=None
         for csv in self.cluster_service_versions:
             if re.match(version,csv['spec']['version']):
@@ -124,7 +125,7 @@ class OlmManifest():
         return images
 
     def get_images_all(self):
-        images=[] 
+        images=[]
         for csv in self.cluster_service_versions:
             for item_deployment in  csv['spec']['install']['spec']['deployments']:
                 for item_container in item_deployment["spec"]["template"]['spec']["containers"]:
@@ -135,8 +136,8 @@ class OlmManifest():
                                 if item_env['value'] not in images:
                                     images.append(item_env['value'])
         return images
-        
-        
+
+
     def __build_bundle_data(self):
         repo_name=self.repo
         packages = [ f for f in os.listdir(repo_name) if re.match(".*package.", f) ]
@@ -183,19 +184,19 @@ else:
     images=csv_bundle.get_images_all()
 
 for image in images:
-    print image
+    print(image)
 
 EOF
 
 function getQuayToken()
 {
    echo "##get Quay Token"
-   Quay_Token=$(curl -s -H "Content-Type: application/json" -XPOST https://quay.io/cnr/api/v1/users/login -d ' { "user": { "username": "anli", "password": "5Lg1uyX1UWOwEo217nOtWYj1eigAvfz2I4SZszyugIxcItEtQrGeUFv7TmeCUhbs" } }' |jq -r '.token')
+   Quay_Token=$(curl -s -H "Content-Type: application/json" -XPOST https://quay.io/cnr/api/v1/users/login -d ' { "user": {  "username": "anli", "password": "5Lg1uyX1UWOwEo217nOtWYj1eigAvfz2I4SZszyugIxcItEtQrGeUFv7TmeCUhbs"} }' |jq -r '.token')
    echo "$Quay_Token" > "${WORK_DIR}/quay.token"
 }
 
 function downloadRepos()
-{  
+{
     echo ""
     echo "#Download buldle.yaml from Operator source"
     repo=$1
@@ -204,12 +205,15 @@ function downloadRepos()
     mkdir -p "${repo_dir}"
     cd "${repo_dir}"
     URL="https://quay.io/cnr/api/v1/packages/${NAMESPACE}/${repo}"
+    echo $URL
+    echo "1111"
+    echo $Quay_Token
     echo "##Get buddle Version"
     curl -s -H "Content-Type: application/json" -H "Authorization: ${Quay_Token}" -XGET $URL |python -m json.tool > manifest.json
     if [[ $USE_LATEST = true ]] ; then
         echo  "##Use latest buddle version"
         release=$(jq -r '.[].release' manifest.json|sort -V |tail -1)
-	echo "The version $release will be used "
+    echo "The version $release will be used "
     else
         releases=$(jq -r '.[].release' manifest.json)
         echo  ""
@@ -230,7 +234,7 @@ function downloadRepos()
             echo "#you must use version in the list"
             exit 1
         fi
-	echo "##The version $release will be used "
+    echo "##The version $release will be used "
 
     fi
     distget=$(jq -r --arg RELEASE "$release" '.[] | select(.release == $RELEASE).content.digest' manifest.json)
@@ -262,7 +266,7 @@ getQuayToken
 echo $REPOSITORYS
 for repository in ${REPOSITORYS}; do
     echo ""
-    echo "# Down load Manifest files"
+    echo "# Download Manifest files"
     downloadRepos "${repository}"
     echo "# Get Image List"
     getImages "${repository}" $VERSION |tee -a "${WORK_DIR}/OperatorSource_Images_List.txt"
